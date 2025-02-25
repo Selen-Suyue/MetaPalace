@@ -48,10 +48,14 @@ for filename in os.listdir(fig_dir):
             request_timestamps.append(time.time())
 
             # 处理图片（压缩）
-            image = Image.open(fig_path)
-            image = image.resize((512, 512))
-            compressed_image_path = "compressed.png"
-            image.save(compressed_image_path)
+            try:
+                image = Image.open(fig_path)
+                image = image.resize((512, 512))
+                compressed_image_path = "compressed.png"
+                image.save(compressed_image_path)
+            except Exception as e:
+                print(f"处理文件 {fig_path} 时出现错误: {e}")
+                continue
             image_file = handle_file(compressed_image_path)
 
             # 运行 image_to_3d（加重试）
