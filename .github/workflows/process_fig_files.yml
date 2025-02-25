@@ -6,8 +6,8 @@ on:
   workflow_dispatch:  # 允许手动触发
   push:
     branches:
-      - main  # 当 main 分支有更新时触发
-
+      - '**'  # 所有分支的 push 操作都会触发
+      
 jobs:
   process-files:
     runs-on: ubuntu-latest
