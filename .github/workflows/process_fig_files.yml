@@ -1,5 +1,8 @@
 name: Process Fig Files
 
+permissions:
+  contents: write  # 允许 GitHub Actions 修改仓库内容
+
 on:
   schedule:
     - cron: "0 * * * *"  # 每小时运行一次
@@ -28,3 +31,11 @@ jobs:
 
       - name: ▶️ 运行 Python 脚本
         run: python ./script/process_fig_files.py
+        
+      - name: 🚀 提交生成的文件
+        uses: EndBug/add-and-commit@v9  # 使用 GitHub 的提交操作 action
+        with:
+          author_name: 'GitHub Actions Process Fig Files'
+          author_email: 'process_fig_files@github.action'
+          message: '自动提交生成的 GLB 和 Video 文件'
+          add: './GLB/* ./Video/*'  # 添加生成的文件
