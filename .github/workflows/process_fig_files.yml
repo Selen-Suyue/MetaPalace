@@ -27,4 +27,4 @@ jobs:
           pip install -r ./script/process_fig_files.requirements.txt
 
       - name: ▶️ 运行 Python 脚本
-        run: python ./script/process_files.py
+        run: python ./script/process_fig_files.py
