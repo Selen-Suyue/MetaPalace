@@ -1,0 +1,30 @@
+name: Process Fig Files
+
+on:
+  schedule:
+    - cron: "0 * * * *"  # 每小时运行一次
+  workflow_dispatch:  # 允许手动触发
+  push:
+    branches:
+      - main  # 当 main 分支有更新时触发
+
+jobs:
+  process-files:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚀 检出代码
+        uses: actions/checkout@v4
+
+      - name: 🛠️ 设置 Python 环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: 📦 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ./script/process_fig_files.requirements.txt
+
+      - name: ▶️ 运行 Python 脚本
+        run: python ./script/process_files.py
