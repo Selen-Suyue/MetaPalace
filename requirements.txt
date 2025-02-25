@@ -1,0 +1,4 @@
+Pillow==11.0.0
+google-generativeai
+
+# pip install -U google-generativeai if needed
