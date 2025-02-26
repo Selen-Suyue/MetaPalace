@@ -50,7 +50,9 @@ for filename in os.listdir(fig_dir):
             # 处理图片（压缩）
             try:
                 image = Image.open(fig_path)
-                image = image.resize((512, 512))
+                # 设定最大尺寸，保持等比例缩放
+                max_size = (512, 512)
+                image.thumbnail(max_size)
                 compressed_image_path = "compressed.png"
                 image.save(compressed_image_path)
             except Exception as e:
