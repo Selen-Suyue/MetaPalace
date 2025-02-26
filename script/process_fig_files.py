@@ -3,7 +3,6 @@ import shutil
 import time
 from gradio_client import Client, handle_file
 from PIL import Image
-from tenacity import retry, stop_after_attempt, wait_fixed
 
 client = Client("JeffreyXiang/TRELLIS")
 
@@ -60,8 +59,17 @@ for filename in os.listdir(fig_dir):
                 continue
             image_file = handle_file(compressed_image_path)
 
+            def start_session():
+                return client.predict(api_name="/start_session")
+
+            try:
+                result = start_session()
+                print(result)
+            except Exception as e:
+                print(f"调用 start_session 失败: {e}")
+                continue  # 跳过此文件
+
             # 运行 image_to_3d（加重试）
-            @retry(stop=stop_after_attempt(3), wait=wait_fixed(5))
             def call_image_to_3d():
                 return client.predict(
                     image=image_file,
@@ -72,7 +80,7 @@ for filename in os.listdir(fig_dir):
                     slat_guidance_strength=3,
                     slat_sampling_steps=12,
                     multiimage_algo="stochastic",
-                    api_name="/image_to_3d"
+                    api_name="/image_to_3d",
                 )
 
             try:
@@ -84,12 +92,9 @@ for filename in os.listdir(fig_dir):
                 continue  # 跳过此文件
 
             # 运行 extract_glb（加重试）
-            @retry(stop=stop_after_attempt(3), wait=wait_fixed(5))
             def call_extract_glb():
                 return client.predict(
-                    mesh_simplify=0.95,
-                    texture_size=1024,
-                    api_name="/extract_glb"
+                    mesh_simplify=0.95, texture_size=1024, api_name="/extract_glb"
                 )
 
             try:
