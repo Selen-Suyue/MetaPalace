@@ -19,6 +19,12 @@ jobs:
       - name: 🚀 检出代码
         uses: actions/checkout@v4
 
+      - name: 🛠️ 列出 Fig 目录内容
+        run: ls -lah Fig
+
+      - name: 🔄 Git LFS 拉取文件
+        run: git lfs pull
+
       - name: 🛠️ 设置 Python 环境
         uses: actions/setup-python@v4
         with:
