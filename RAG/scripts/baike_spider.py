@@ -7,6 +7,8 @@ from glob_assets_name import _get_assets_name
 
 # Base url for the spider to crawl.
 BASE_URL = 'https://baike.baidu.com/item/'
+
+CALL_BACK_BASE_URL = 'https://www.baidu.com/s?wd='
 # The folder path where the assets are stored.
 ASSETS_PATH = 'Fig/*'
 # Default encoding style for the html.
@@ -15,7 +17,10 @@ HTML_ECODE_STYLE = 'utf-8'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
 # Sleep time for the spider to avoid being blocked.
 SLEEP_TIME = 1
-CALL_BACK_BASE_URL = 'https://www.baidu.com/s?wd='
+# Retry times for the spider to search.
+RETEY_TIMES = 3
+# The depth of the spider to retrive the data.
+RETRIVE_DEPTH = 1
 def url_builder(baseurl: str, keyname: str) -> str:
     return f'{baseurl}{parse.quote(keyname)}'
 
@@ -37,12 +42,15 @@ def spider_use_request(keyname: str):
         return r
     except Exception as e:
         print(f"\nWarning: faild to find {keyname} in Baidu Baike, unable to open the url.\n", e)
+        return None
 
 def build_bs4_matcher(html) -> BeautifulSoup:
     return BeautifulSoup(html, 'lxml')
 
 def clean_text(text: str) -> str:
     cleaned_text = re.sub(r'\(.*', '', text)
+    cleaned_text = re.sub(r'\[', '', cleaned_text)
+    cleaned_text = re.sub(r'\]', '', cleaned_text)
     cleaned_text = cleaned_text.strip()
     return cleaned_text
 
@@ -61,20 +69,34 @@ class SearchCallBackForNewNameProvider():
             'User-Agent': USER_AGENT
         }
 
-    def spider_google(self, unsupported_name: str): 
+    def get_relative_names(self, unsupported_name: str): 
+        """
+            Search for the relativave names Baidu Baike obtained.
+        """
+        self.block_texts = None
+        print(f'\nSearching for {unsupported_name}...')
+        time.sleep(SLEEP_TIME)
         url = url_builder(self.base_url, unsupported_name)
         headers = self.headers_builder_google()
         context = context_builder()
         req = request.Request(url=url, headers=headers, method='GET')
-        self.r = request.urlopen(req, context=context)
+        try:
+            self.r = request.urlopen(req, context=context)
+        except Exception as e:
+            print(f"\nWarning: faild to get relative names of {unsupported_name} from Baidu Baike, unable to open the url.\n", e)
+            return None
         self.soup = build_bs4_matcher(self.r.read().decode(HTML_ECODE_STYLE))
-        self.text = self.soup.get_text()
+        self.block_texts = self.soup.find_all(class_='c-title t')
+        self.block_texts.extend(self.soup.find_all(class_='t kg-title_jwHUX tts-b-hl'))
+        return self.convert_to_text()
 
+    def convert_to_text(self) -> list:
+        block_texts = build_bs4_matcher(str(self.block_texts)).text
         pattern = r'(\S+)\s?-\s?百度百科'
-        matches = re.findall(pattern, self.text)
+        matches = re.findall(pattern, block_texts)
         cleaned_matches = [clean_text(match) for match in matches]
         return cleaned_matches
-    
+# Initialize the search engine provider.
 CALL_BACK_PROVIDER = SearchCallBackForNewNameProvider()
     
 class RelicsBaikeTextProvider():
@@ -98,7 +120,7 @@ class RelicsBaikeTextProvider():
         """
         self.r = spider_use_request(keyname)
         if self.r is None:
-            new_keynames = provider.spider_google(keyname)
+            new_keynames = provider.get_relative_names(keyname)
             for new_keyname in new_keynames:
                 self.r = spider_use_request(new_keyname)
                 if self.r is not None:
@@ -117,11 +139,58 @@ class RelicsBaikeTextProvider():
         for block_text in self.block_texts:
             self.text += block_text.text
 
+SINGLE_TEXT_PROVIDER = RelicsBaikeTextProvider()
+
+class BaiduBaikeSpider():
+    """
+        This class is used to manage the baike.baidu.com spider to work.
+    """
+    def __init__(self, 
+                 retry_times: int = RETEY_TIMES,
+                 sleep_time: int = SLEEP_TIME,
+                 retrive_depth: int = RETRIVE_DEPTH,
+                 asset_names: list = _get_assets_name(ASSETS_PATH),
+                 names_provider: SearchCallBackForNewNameProvider = CALL_BACK_PROVIDER, 
+                 text_provider: RelicsBaikeTextProvider = SINGLE_TEXT_PROVIDER):
+        self.retry_times = retry_times
+        self.sleep_time = sleep_time
+        self.alias_names = None
+        self.asset_names = asset_names
+        self.names_provider = names_provider
+        self.text_provider = text_provider
+
+    def get_alias_names(self, asset_name: str) -> list:
+        """
+            Get the alias names of the asset.
+        """
+        retry = 0
+        alias_names = None
+        while alias_names is None or len(alias_names) == 0:
+            time.sleep(self.sleep_time)
+            alias_names = self.names_provider.get_relative_names(asset_name)
+            retry += 1
+            if retry >= self.retry_times:
+                break
+        return alias_names
+    
+    def _run(self):
+        i = 0
+        for asset_name in self.asset_names:
+            print(f"\n{i + 1}. Processing {asset_name}...")
+            alias_names =  self.get_alias_names(asset_name)
+            if len(alias_names) == 0:
+                print(f"Failed to get data for {asset_name} in baidu.com.")
+                continue
+            j = 0
+            for alias_name in alias_names:
+                if j >= 3:
+                    break
+                print(f"\n{i + 1}.{j + 1}. Processing {alias_name}...")
+                text = self.text_provider.get_relics_text(alias_name)
+                print(text)
+                j += 1
+
 if __name__ == '__main__':
-    provider = RelicsBaikeTextProvider()
-    keyname_list = ['龙泉窑青釉带盖执壶', '青玉荷叶洗', '蟠虺纹鼎']
-    for keyname in keyname_list:
-        print(f"\nPlease wait for a moment, now is processing {keyname}...")
-        time.sleep(1)
-        text = provider.get_relics_text(keyname)
-        print(text)
+    name_list = ['青玉浮雕青蛙荷叶洗', '清文竹镂空两层海棠式盒']
+    spider = BaiduBaikeSpider(asset_names=name_list)
+    spider._run()
