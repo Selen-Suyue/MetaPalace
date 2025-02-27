@@ -1,0 +1,127 @@
+from urllib import request,parse
+from bs4 import BeautifulSoup
+import ssl, time
+import re
+
+from glob_assets_name import _get_assets_name
+
+# Base url for the spider to crawl.
+BASE_URL = 'https://baike.baidu.com/item/'
+# The folder path where the assets are stored.
+ASSETS_PATH = 'Fig/*'
+# Default encoding style for the html.
+HTML_ECODE_STYLE = 'utf-8'
+# Default user agent for the spider.
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
+# Sleep time for the spider to avoid being blocked.
+SLEEP_TIME = 1
+CALL_BACK_BASE_URL = 'https://www.baidu.com/s?wd='
+def url_builder(baseurl: str, keyname: str) -> str:
+    return f'{baseurl}{parse.quote(keyname)}'
+
+def headers_builder():
+    return {
+        'User-Agent': USER_AGENT
+    }
+
+def context_builder() -> ssl.SSLContext:
+    return ssl._create_unverified_context()
+
+def spider_use_request(keyname: str):
+    rurl = url_builder(baseurl=BASE_URL, keyname=keyname)
+    rheaders = headers_builder()
+    context = context_builder()
+    req = request.Request(url=rurl, headers=rheaders, method='GET')
+    try:
+        r = request.urlopen(req, context=context)
+        return r
+    except Exception as e:
+        print(f"\nWarning: faild to find {keyname} in Baidu Baike, unable to open the url.\n", e)
+
+def build_bs4_matcher(html) -> BeautifulSoup:
+    return BeautifulSoup(html, 'lxml')
+
+def clean_text(text: str) -> str:
+    cleaned_text = re.sub(r'\(.*', '', text)
+    cleaned_text = cleaned_text.strip()
+    return cleaned_text
+
+
+class SearchCallBackForNewNameProvider():
+    """
+    This class is used to get the supported name of the relic.
+    """
+    base_url = CALL_BACK_BASE_URL
+    def __init__(self):
+        self.r = None
+        pass
+
+    def headers_builder_google(self):
+        return {
+            'User-Agent': USER_AGENT
+        }
+
+    def spider_google(self, unsupported_name: str): 
+        url = url_builder(self.base_url, unsupported_name)
+        headers = self.headers_builder_google()
+        context = context_builder()
+        req = request.Request(url=url, headers=headers, method='GET')
+        self.r = request.urlopen(req, context=context)
+        self.soup = build_bs4_matcher(self.r.read().decode(HTML_ECODE_STYLE))
+        self.text = self.soup.get_text()
+
+        pattern = r'(\S+)\s?-\s?百度百科'
+        matches = re.findall(pattern, self.text)
+        cleaned_matches = [clean_text(match) for match in matches]
+        return cleaned_matches
+    
+CALL_BACK_PROVIDER = SearchCallBackForNewNameProvider()
+    
+class RelicsBaikeTextProvider():
+    """
+    This class is used to export all relative texts of the relics from the baike.baidu.com.
+    """
+    def __init__(self):
+        self.r = None
+        self.ecode_style = HTML_ECODE_STYLE
+        self.soup = None
+        self.block_texts = None
+        self.text = None
+
+    def get_relics_text(self, keyname: str, provider: SearchCallBackForNewNameProvider = CALL_BACK_PROVIDER) -> list:
+        """
+            Get the target html block from the web page.
+            Args:
+                `keyname`: The name of the relic.
+            Returns:
+                `block_texts`: The target html block. Use `block_text.text` to get the text.
+        """
+        self.r = spider_use_request(keyname)
+        if self.r is None:
+            new_keynames = provider.spider_google(keyname)
+            for new_keyname in new_keynames:
+                self.r = spider_use_request(new_keyname)
+                if self.r is not None:
+                    break
+        if self.r is None:
+            return []
+        self.soup = build_bs4_matcher(self.r.read().decode(self.ecode_style))
+        self.block_texts = self.soup.find_all(class_='para_gLUIg summary_By2fs MARK_MODULE')
+
+        self.block_texts.extend(self.soup.find_all(class_='para_gLUIg content_hDxHU MARK_MODULE'))
+        self.text = ''
+        self.convert_to_text()
+        return self.text
+    
+    def convert_to_text(self) -> str:
+        for block_text in self.block_texts:
+            self.text += block_text.text
+
+if __name__ == '__main__':
+    provider = RelicsBaikeTextProvider()
+    keyname_list = ['龙泉窑青釉带盖执壶', '青玉荷叶洗', '蟠虺纹鼎']
+    for keyname in keyname_list:
+        print(f"\nPlease wait for a moment, now is processing {keyname}...")
+        time.sleep(1)
+        text = provider.get_relics_text(keyname)
+        print(text)
