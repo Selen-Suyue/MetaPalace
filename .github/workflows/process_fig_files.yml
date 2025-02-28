@@ -4,12 +4,10 @@ permissions:
   contents: write  # 允许 GitHub Actions 修改仓库内容
 
 on:
-  schedule:
-    - cron: "0 * * * *"  # 每小时运行一次
   workflow_dispatch:  # 允许手动触发
   push:
-    branches:
-      - '**'  # 所有分支的 push 操作都会触发
+    paths:
+      - 'Fig/**'  # 仅在 Fig 目录中的文件发生变动时触发
       
 jobs:
   process-files:
