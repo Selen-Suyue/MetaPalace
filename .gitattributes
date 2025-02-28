@@ -1,3 +1,0 @@
-GLB/*.glb filter=lfs diff=lfs merge=lfs -text
-Fig/*.png filter=lfs diff=lfs merge=lfs -text
-Video/*.mp4 filter=lfs diff=lfs merge=lfs -text
