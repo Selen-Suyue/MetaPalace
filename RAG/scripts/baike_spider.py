@@ -6,6 +6,10 @@ import re
 from get_proxy import get_proxy
 from glob_assets_name import _get_assets_name
 from file_handler import FileHandler, RestoreHandlerType
+
+# The default archive policy for the spider.
+DEFAULT_FIRST_ARCHIVE_POLICY = RestoreHandlerType.COVER
+DEFAULT_ARCHIVE_POLICY = RestoreHandlerType.SUPERADD
 # The default restore policy for the spider.
 DEFAULT_RESTORE_POLICY = RestoreHandlerType.SUPERADD
 
@@ -197,7 +201,10 @@ class BaiduBaikeSpider():
             alias_names =  self.get_alias_names(asset_name)
             if len(alias_names) == 0:
                 print(f"Failed to get data for {asset_name} in baidu.com.")
-                self.file_handler._archive_unloaded_asset(asset_name)
+                if i == 0:
+                    self.file_handler._archive_unloaded_asset(asset_name, DEFAULT_FIRST_ARCHIVE_POLICY)
+                else:
+                    self.file_handler._archive_unloaded_asset(asset_name, DEFAULT_ARCHIVE_POLICY)
                 i += 1
                 continue
             j = 0
