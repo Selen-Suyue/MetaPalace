@@ -1,6 +1,9 @@
 import os
 import shutil
 import time
+import sys
+from collections import deque
+
 from gradio_client import Client, handle_file
 from PIL import Image
 
@@ -10,112 +13,139 @@ client = Client("JeffreyXiang/TRELLIS")
 os.makedirs("./GLB", exist_ok=True)
 os.makedirs("./Video", exist_ok=True)
 
-fig_dir = "./Fig"
-video_dir = "./Video"
-glb_dir = "./GLB"
+FIG_DIR = "./Fig"
+VIDEO_DIR = "./Video"
+GBL_DIR = "./GLB"
 
-# API 速率限制：每 1 分钟最多 1 次
-MAX_REQUESTS_PER_MIN = 1
-REQUEST_INTERVAL = 60 / MAX_REQUESTS_PER_MIN  # 每次请求间隔（秒）
+# 记录最近 60 秒内的请求时间戳
+request_timestamps = deque()
 
-# 记录请求时间戳
-request_timestamps = []
+# 设定窗口时长和最大请求次数
+RATE_LIMIT_WINDOW = 60  # 秒
+MAX_REQUESTS_PER_WINDOW = 1
 
-# 处理 PNG 文件
-for filename in os.listdir(fig_dir):
-    if filename.lower().endswith(".png"):  # 仅处理 PNG 文件
-        base_name = os.path.splitext(filename)[0]
-        fig_path = os.path.join(fig_dir, filename)
-        video_path = os.path.join(video_dir, f"{base_name}.mp4")
-        glb_path = os.path.join(glb_dir, f"{base_name}.glb")
 
-        # 仅在视频文件不存在时执行
-        if not os.path.exists(video_path):
-            print(f"处理文件: {fig_path}")
+def rate_limit():
+    """检查并等待直到符合速率限制"""
+    now = time.time()
 
-            # 限制速率（检查时间戳）
-            while len(request_timestamps) >= MAX_REQUESTS_PER_MIN:
-                now = time.time()
-                if now - request_timestamps[0] >= 60:
-                    request_timestamps.pop(0)  # 移除旧请求
-                else:
-                    sleep_time = 60 - (now - request_timestamps[0])
-                    print(f"达到 API 限制，等待 {sleep_time:.2f} 秒...")
-                    time.sleep(sleep_time)
+    # 清理超过窗口期的时间戳
+    while request_timestamps and now - request_timestamps[0] >= RATE_LIMIT_WINDOW:
+        request_timestamps.popleft()
 
-            # 记录请求时间
-            request_timestamps.append(time.time())
+    # 如果当前请求数已经满了，等待下一个时间点
+    if len(request_timestamps) >= MAX_REQUESTS_PER_WINDOW:
+        earliest = request_timestamps[0]
+        sleep_time = RATE_LIMIT_WINDOW - (now - earliest)
+        print(f"达到 API 限制，等待 {sleep_time:.2f} 秒...")
+        time.sleep(max(0, sleep_time))
 
-            # 处理图片（压缩）
-            try:
-                image = Image.open(fig_path)
-                # 设定最大尺寸，保持等比例缩放
-                max_size = (512, 512)
-                image.thumbnail(max_size)
-                compressed_image_path = "compressed.png"
-                image.save(compressed_image_path)
-            except Exception as e:
-                print(f"处理文件 {fig_path} 时出现错误: {e}")
-                continue
-            image_file = handle_file(compressed_image_path)
+        # 重新清理并确认
+        now = time.time()
+        while request_timestamps and now - request_timestamps[0] >= RATE_LIMIT_WINDOW:
+            request_timestamps.popleft()
 
-            def start_session():
-                return client.predict(api_name="/start_session")
+    # 记录当前请求时间戳
+    request_timestamps.append(time.time())
 
-            try:
-                result = start_session()
-                print(result)
-            except Exception as e:
-                print(f"调用 start_session 失败: {e}")
-                continue  # 跳过此文件
 
-            # 运行 image_to_3d（加重试）
-            def call_image_to_3d():
-                return client.predict(
-                    image=image_file,
-                    multiimages=[],
-                    seed=0,
-                    ss_guidance_strength=7.5,
-                    ss_sampling_steps=12,
-                    slat_guidance_strength=3,
-                    slat_sampling_steps=12,
-                    multiimage_algo="stochastic",
-                    api_name="/image_to_3d",
-                )
+def handle_api_failure(message: str):
+    print(f"[ERROR] {message}")
+    sys.exit(1)  # 立刻终止整个程序
 
-            try:
-                result = call_image_to_3d()
-                print(result)
-                generated_video_path = result.get("video")
-            except Exception as e:
-                print(f"调用 image_to_3d 失败: {e}")
-                continue  # 跳过此文件
 
-            # 运行 extract_glb（加重试）
-            def call_extract_glb():
-                return client.predict(
-                    mesh_simplify=0.95, texture_size=1024, api_name="/extract_glb"
-                )
+def compress_image(input_path: str, output_path: str = "compressed.png"):
+    image = Image.open(input_path)
+    image.thumbnail((512, 512))
+    image.save(output_path)
+    return output_path
 
-            try:
-                result = call_extract_glb()
-                print(result)
-                generated_glb_path = result[0]
-            except Exception as e:
-                print(f"调用 extract_glb 失败: {e}")
-                continue  # 跳过此文件
 
-            # 移动文件到目标目录
-            if generated_video_path:
-                shutil.move(generated_video_path, video_path)
-                print(f"视频文件已移动至: {video_path}")
+def call_start_session():
+    try:
+        return client.predict(api_name="/start_session")
+    except Exception as e:
+        handle_api_failure(f"调用 start_session 失败: {e}")
 
-            if generated_glb_path:
-                shutil.move(generated_glb_path, glb_path)
-                print(f"GLB 文件已移动至: {glb_path}")
 
-            # 等待下一次请求
-            time.sleep(REQUEST_INTERVAL)
+def call_image_to_3d(image_file):
+    try:
+        return client.predict(
+            image=image_file,
+            multiimages=[],
+            seed=0,
+            ss_guidance_strength=7.5,
+            ss_sampling_steps=12,
+            slat_guidance_strength=3,
+            slat_sampling_steps=12,
+            multiimage_algo="stochastic",
+            api_name="/image_to_3d",
+        )
+    except Exception as e:
+        handle_api_failure(f"调用 image_to_3d 失败: {e}")
 
-        else:
-            print(f"跳过: {video_path} 已存在")
+
+def call_extract_glb():
+    try:
+        return client.predict(
+            mesh_simplify=0.95, texture_size=1024, api_name="/extract_glb"
+        )
+    except Exception as e:
+        handle_api_failure(f"调用 extract_glb 失败: {e}")
+
+
+for filename in os.listdir(FIG_DIR):
+    if not filename.lower().endswith(".png"):
+        continue
+
+    base_name = os.path.splitext(filename)[0]
+    fig_path = os.path.join(FIG_DIR, filename)
+    video_path = os.path.join(VIDEO_DIR, f"{base_name}.mp4")
+    glb_path = os.path.join(GBL_DIR, f"{base_name}.glb")
+
+    if os.path.exists(video_path):
+        print(f"跳过: {video_path} 已存在")
+        continue
+
+    print(f"处理文件: {fig_path}")
+
+    # 速率限制
+    rate_limit()
+
+    # 压缩图片
+    try:
+        compressed_image_path = compress_image(fig_path)
+        image_file = handle_file(compressed_image_path)
+    except Exception as e:
+        print(f"压缩图片失败: {e}")
+        continue
+
+    # Start Session
+    session_result = call_start_session()
+    print(session_result)
+
+    # Image to 3D
+    image_to_3d_result = call_image_to_3d(image_file)
+    print(image_to_3d_result)
+
+    generated_video_path = image_to_3d_result.get("video")
+    if not generated_video_path:
+        handle_api_failure("image_to_3d 返回结果中没有找到视频文件路径")
+
+    # Extract GLB
+    extract_glb_result = call_extract_glb()
+    print(extract_glb_result)
+
+    if not extract_glb_result or len(extract_glb_result) < 1:
+        handle_api_failure("extract_glb 返回结果无效")
+
+    generated_glb_path = extract_glb_result[0]
+
+    # 保存结果文件
+    shutil.move(generated_video_path, video_path)
+    print(f"视频文件已保存: {video_path}")
+
+    shutil.move(generated_glb_path, glb_path)
+    print(f"GLB 文件已保存: {glb_path}")
+
+print("所有文件处理完毕。")

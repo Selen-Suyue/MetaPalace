@@ -1,3 +1,2 @@
 gradio_client
 pillow
-tenacity
