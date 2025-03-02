@@ -3,7 +3,7 @@
 
 This innovative project breathes digital life into the cultural treasures of the Palace Museum. Our immersive platform invites you to engage with history through cutting-edge interactions: Tap ultra-high-definition cultural relic imagery to activate dynamically generated 3D models, where every artifact unfolds its story through AI-powered 360-degree visual narratives. Enhanced by RAG-optimized knowledge systems and professional audio guides, the experience functions as your personal digital curator, decoding cultural symbols and revealing historical contexts with cinematic clarity. By merging tangible heritage with virtual exploration, we transcend temporal boundaries, democratizing cultural heritage appreciation through reimagined digital encounters.✨
 
-The project was completed by [Yue Su](https://selen-suyue.github.io),[xj63](https://github.com/xj63),[Kai Li](https://github.com/wink-snow),[Zefeng Wu](https://github.com/windansnowman),[Ruihan Wu](https://github.com/cool-chicken),...
+The project was completed by [Yue Su](https://selen-suyue.github.io),[Hengxi Su](https://github.com/xj63),[Kai Li](https://github.com/wink-snow),[Zefeng Wu](https://github.com/windansnowman),[Ruihan Wu](https://github.com/cool-chicken),...
 
 Welcome to visit our [website]
 
