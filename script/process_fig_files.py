@@ -51,7 +51,7 @@ def rate_limit():
 
 def handle_api_failure(message: str):
     print(f"[ERROR] {message}")
-    sys.exit(1)  # 立刻终止整个程序
+    sys.exit(0)  # 立刻终止整个程序
 
 
 def compress_image(input_path: str, output_path: str = "compressed.png"):
