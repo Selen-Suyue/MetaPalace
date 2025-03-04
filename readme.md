@@ -37,3 +37,41 @@
 ## 注意事项
 
 ## 文件结构
+```
+MetaPalace/
+├── .github/
+│   └── workflows/
+│       └── process_fig_files.yml  # GitHub Actions 工作流程文件
+├── Fig/                           # 存放原始 PNG 图片
+├── GLB/                           # 存放生成的 GLB 文件
+├── RAG/
+│   ├── archive/
+│   │   └── archived_assets.txt   # 记录爬取失败的文物名称
+│   ├── data/                     # 存放文物描述信息的文本文件
+│   ├── db/
+│   │   └── qdrant/
+│   │       ├── collection        # Qdrant 数据库文件 (向量数据)
+│   │       └── meta.json         # Qdrant 数据库元数据，包含集合信息
+│   ├── langchain_gemini.py       # RAG 链的主文件，使用 Langchain 和 Gemini LLM
+│   ├── models/
+│   │   ├── bge_embedding.py      # BGE 嵌入模型，用于生成文本向量
+│   │   ├── data_handler.py       # 数据处理脚本，用于加载、清洗和分割文本数据
+│   │   ├── gemini_llm.py         # Gemini LLM 封装，用于调用 Google Gemini 模型
+│   │   └── qdrant_db_manager.py  # Qdrant 数据库管理脚本，用于创建、连接和操作 Qdrant 数据库
+│   ├── RAG.requirements.txt      # RAG 目录的依赖文件
+│   └── scripts/
+│       ├── baike_spider.py       # 爬虫脚本，用于从百度百科爬取文物信息
+│       ├── file_handler.py       # 文件处理脚本，用于读写文物信息
+│       ├── get_proxy.py          # 获取代理 IP
+│       ├── handle_qdrant_db.py   # Qdrant 数据库处理脚本，用于初始化和获取向量数据库
+│       └── glob_assets_name.py    # 用于生成文物名称列表
+├── Video/                         # 存放生成的视频文件的目录
+├── script/
+│   ├── process_fig_files.py       # Python 脚本，用于处理图片并生成 3D 模型和视频
+│   └── process_fig_files.requirements.txt # Python 依赖文件
+├── api_key.txt                    # 存放 Google Gemini API 密钥的文件 (*需要用户具体配置*)
+├── meta.py                        # 主应用程序文件
+├── readme.md                      # 中文版 README 文件
+└── readme_en.md                   # 英文版 README 文件
+└── requirements.txt               # 项目依赖文件
+```
