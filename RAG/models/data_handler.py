@@ -1,9 +1,8 @@
 from langchain_core.documents import Document
-from langchain.document_loaders.pdf import PyMuPDFLoader
-from langchain.document_loaders.text import TextLoader
+from langchain_community.document_loaders.pdf import PyMuPDFLoader
+from langchain_community.document_loaders.text import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-import os, re, sys
-
+import os, re
 class DataHandler():
     def __init__(self, folder_path: str, chunk_size: int = 200, overlap_size: int = 50):
         self.folder_path = folder_path

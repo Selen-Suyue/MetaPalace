@@ -66,6 +66,6 @@ class GeminiLLMChain():
     
 if __name__ == '__main__':
     from PIL import Image
-    img_file = Image.open('Fig\\黄杨木雕带链葫芦.png')
+    img_file = Image.open('Fig\\青玉交龙纽“救正万邦之宝”（二十五宝之一）.png')
     chain = GeminiLLMChain()
-    print(chain.answer('黄杨木雕带链葫芦', img=img_file))
+    print(chain.answer('青玉交龙纽“救正万邦之宝”（二十五宝之一）', img=img_file))
