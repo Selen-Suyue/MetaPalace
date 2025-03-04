@@ -3,7 +3,7 @@
 
 本项目旨在以数字科技唤醒故宫典藏，为千年文物注入现代活力。我们精心构建沉浸式数字互动平台，邀您开启跨时空的文化邂逅：轻触唤醒文物超清影像，360度全维度3D模型即刻呈现。AI技术自动生成的知识增强型讲解系统，配合专业语音导览，为您打造全天候私人文物策展体验。每一道纹路都在讲述文明密码，每件瑰宝皆可对话历史回响。通过虚实融合的交互设计，我们让文化遗产在数字维度焕发新生，构建穿越时空的文明对话。✨
 
-该项目由 [Yue Su](https://selen-suyue.github.io),[Hengxi Su](https://github.com/xj63),[Kai Li](https://github.com/wink-snow),[Zefeng Wu](https://github.com/windansnowman),[Ruihan Wu](https://github.com/cool-chicken)完成，...
+该项目由 [Yue Su](https://selen-suyue.github.io),[xj63](https://github.com/xj63),[Kai Li](https://github.com/wink-snow),[Zefeng Wu](https://github.com/windansnowman),[Ruihan Wu](https://github.com/cool-chicken)完成，...
 
 欢迎访问我们的 [网站]
 
