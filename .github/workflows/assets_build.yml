@@ -22,7 +22,7 @@ jobs:
         python-version: '3.13'
 
     - name: Run asset extraction script
-      run: python .github/scripts/extract_assets.py
+      run: python .github/script/extract_assets.py
 
     - name: Fetch assets branch meta.json (if exists)
       run: |
