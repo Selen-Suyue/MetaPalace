@@ -1,0 +1,50 @@
+name: Daily Build Assets
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天凌晨执行
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-assets:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout main branch
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Run asset extraction script
+      run: python .github/scripts/extract_assets.py
+
+    - name: Fetch assets branch meta.json (if exists)
+      run: |
+        git fetch origin assets || true
+        mkdir -p assets-meta
+        git show origin/assets:meta.json > assets-meta/meta.json || touch assets-meta/meta.json
+
+    - name: Check for changes
+      id: check_changes
+      run: |
+        if cmp -s build/meta.json assets-meta/meta.json; then
+          echo "no_changes=true" >> $GITHUB_ENV
+        else
+          echo "no_changes=false" >> $GITHUB_ENV
+        fi
+
+    - name: Create or Update assets branch
+      if: env.no_changes == 'false'
+      run: |
+        git checkout --orphan assets
+        git rm -rf .
+        cp -r build/* .
+        git add -A
+        git commit -m "Daily update assets - $(date +'%Y-%m-%d %H:%M:%S')"
+        git push origin assets --force
