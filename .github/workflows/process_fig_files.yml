@@ -33,10 +33,10 @@ jobs:
 
       - name: 📦 安装依赖
         run: |
-          pip install -r ./script/process_fig_files.requirements.txt
+          pip install -r ./.github/script/process_fig_files.requirements.txt
 
       - name: ▶️ 运行 Python 脚本
-        run: python ./script/process_fig_files.py
+        run: python ./.github/script/process_fig_files.py
 
       - name: 🔄 提交前拉取最新代码
         run: |
