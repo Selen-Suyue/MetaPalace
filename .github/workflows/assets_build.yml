@@ -41,13 +41,15 @@ jobs:
         else
           echo "no_changes=false" >> $GITHUB_ENV
         fi
+        rm -r assets-meta
 
     - name: Create or Update assets branch
       if: env.no_changes == 'false'
       run: |
         git checkout --orphan assets
         git rm -rf .
-        cp -r build/* .
+        mv build/* .
+        rm -r build
         git add -A
         git config user.name "Assets Builder Bot"
         git config user.email "assets-builder-bot@github.com"
