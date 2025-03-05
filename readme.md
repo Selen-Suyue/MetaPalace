@@ -75,3 +75,11 @@ MetaPalace/
 └── readme_en.md                   # 英文版 README 文件
 └── requirements.txt               # 项目依赖文件
 ```
+
+## GitHub Actions
+
+- **process_fig_files** 自动处理 `Fig` 文件夹中新增的图片，触发自动生成相应3d模型等操作。
+- **assets_build** 自动提取 `main` 分支的资源到 `assets` 分支中。
+  1. assets_build 会调用 `.github/script/extract_assets.py` 来提取 `main` 资源到 `build` 文件夹中
+  2. `build` 文件夹会自动写入 `assets` 分支
+  3. `assets` 分支中的文件会自动部署到 `assets.metapalace.xj63.fun` 中，

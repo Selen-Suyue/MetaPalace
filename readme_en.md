@@ -83,3 +83,11 @@ MetaPalace/
 └── readme_en.md                   # English README file
 └── requirements.txt               # Project dependency file
 ```
+
+## GitHub Actions
+
+- **process_fig_files**: Automatically processes the new images in the `Fig` folder, triggering the automatic generation of corresponding 3D models and other operations.
+- **assets_build**: Automatically extracts resources from the `main` branch to the `assets` branch.
+  1. `assets_build` will call `.github/script/extract_assets.py` to extract resources from `main` and place them in the `build` folder.
+  2. The `build` folder will be automatically committed to the `assets` branch.
+  3. Files in the `assets` branch will be automatically deployed to `assets.metapalace.xj63.fun`.
