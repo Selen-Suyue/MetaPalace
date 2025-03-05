@@ -46,5 +46,7 @@ jobs:
         git rm -rf .
         cp -r build/* .
         git add -A
+        git config user.name "Assets Builder Bot"
+        git config user.email "assets-builder-bot@github.com"
         git commit -m "Daily update assets - $(date +'%Y-%m-%d %H:%M:%S')"
         git push origin assets --force
