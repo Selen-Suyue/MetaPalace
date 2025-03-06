@@ -41,6 +41,14 @@ class ConversationWithMemory():
         return {'messages': AIMessage(content=response)}
 
     def create_session(self, artifact_name: str, context: str):
+        """
+            Create a new session from the global manager.
+            Parameters:
+                `artifact_name`: str, the name of the artifact
+                `context`: str, the context of the artifact
+            Returns:
+                `config`: dict, the configuration of the session
+        """
         thread_id = uuid.uuid4()
         config = {"configurable": {"thread_id": thread_id}}
         system_message = SystemMessage(content=SYSTEM_MESSAGE_TEMPLATE.format(artifact_name=artifact_name, context=context))
@@ -48,7 +56,15 @@ class ConversationWithMemory():
             pass
         return config
     
-    def ask(self, config, message):
+    def __call__(self, config, message) -> str:
+        """
+            Ask a question to the model using the specfic config of the session currently.
+            Parameters:
+                `config`: dict, the configuration of the session
+                `message`: str, the question to ask
+            Returns:
+                `output`: str, the answer from the model
+        """
         input_message = HumanMessage(content=message)
         output_message = None
         for output_message in self.app.stream({"messages": [input_message]}, config, stream_mode="values"):
@@ -58,5 +74,5 @@ class ConversationWithMemory():
 if __name__ == "__main__":
     conversation = ConversationWithMemory()
     config = conversation.create_session(artifact_name='莲鹤方壶', context='这是一件精美的文物。')
-    output = conversation.ask(config, "介绍一下此玉壶。")
+    output = conversation(config, "介绍一下此玉壶。")
     print(output)

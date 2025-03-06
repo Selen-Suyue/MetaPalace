@@ -4,6 +4,7 @@ _ = load_dotenv(find_dotenv())
 import os
 from models.gemini_llm import GeminiLLM
 from scripts.langchain_vector_store import LangchainVectorStoreManager
+from modules.conversation_gemini import ConversationWithMemory
 from langchain.prompts import PromptTemplate
 from typing import Optional
 from PIL.ImageFile import ImageFile
@@ -22,6 +23,7 @@ TOP_K = 5
 # The global manager class can't be initialized once more, with the same persist path. So we use a global variable to store the manager.
 # If you want to create a new DB client, please initialize the vector store in another dir.
 VECTOR_DB_MANAGER = LangchainVectorStoreManager()
+CONVERSATION_MANAGER = ConversationWithMemory()
 
 class GeminiLLMChain():
     """
@@ -29,9 +31,8 @@ class GeminiLLMChain():
         Parameters:
             `model_name`: str, model name, default is 'gemini-2.0-flash'
             `template`: str, prompt template, default is a template for explaining artifacts. You could modify it according to your needs.
-            `top_k`: int, top k retrieval results, default is 5
     """
-    def __init__(self, model_name: str = MODEL_NAME, template: str = TEMPLATE, top_k: int = TOP_K):
+    def __init__(self, model_name: str = MODEL_NAME, template: str = TEMPLATE):
         self.llm = GeminiLLM(
             model=model_name,
             api_key=os.environ['GOOGLE_API_KEY']
@@ -40,17 +41,16 @@ class GeminiLLMChain():
             input_variables=["artifact_name", "context"],
             template=template
         )
-        self.top_k = top_k
         self.vector_db = VECTOR_DB_MANAGER.get_vector_db_from_collection('Relics')
 
-    def get_retrieval_docs(self, artifact_name: str):
+    def get_retrieval_docs(self, artifact_name: str, k: int):
         docs = self.vector_db.similarity_search(
             query=artifact_name,
-            k=self.top_k
+            k=k
         )
-        return docs
+        return '\n'.join([doc.page_content for doc in docs])
     
-    def __call__(self, artifact_name: str, img: Optional[ImageFile] = None):
+    def __call__(self, artifact_name: str, img: Optional[ImageFile] = None, top_k: int = TOP_K):
         """
             Get the description of an artifact. The `img` parameter is optional.
             Parameters:
@@ -60,13 +60,19 @@ class GeminiLLMChain():
                 >>> chain = GeminiLLMChain()
                 >>> print(chain.answer('黄杨木雕带链葫芦'))
         """
-        docs = self.get_retrieval_docs(artifact_name)
-        context = '\n'.join([doc.page_content for doc in docs])
+        context = self.get_retrieval_docs(artifact_name, top_k)
         prompt = self.chain_template.format(artifact_name=artifact_name, context=context)
         return self.llm._call(
             prompt=prompt,
             img=img
         )
+    
+    def create_session(self, artifact_name: str, k: int = TOP_K):
+        context = self.get_retrieval_docs(artifact_name, k)
+        return CONVERSATION_MANAGER.create_session(artifact_name, context)
+    
+    def chat(self, config, input: str):
+        return CONVERSATION_MANAGER(config, input)
     
 if __name__ == '__main__':
     '''
@@ -90,5 +96,6 @@ if __name__ == '__main__':
     chain = GeminiLLMChain()
     print(chain('青玉交龙纽“救正万邦之宝”（二十五宝之一）', img=img_file))
 
-    chain2 = GeminiLLMChain()
-    print(chain2('青玉交龙纽“救正万邦之宝”（二十五宝之一）'))
+    new_session_config = chain.create_session('青玉交龙纽“救正万邦之宝”（二十五宝之一）', 3)
+    print(chain.chat(new_session_config, '你是谁？'))
+    print(chain.chat(new_session_config, '刚刚的文物叫啥名？'))
