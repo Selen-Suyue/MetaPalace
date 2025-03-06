@@ -45,15 +45,18 @@ class ConversationWithMemory():
         config = {"configurable": {"thread_id": thread_id}}
         system_message = SystemMessage(content=SYSTEM_MESSAGE_TEMPLATE.format(artifact_name=artifact_name, context=context))
         for event in self.app.stream({"messages": [system_message]}, config, stream_mode="values"):
-            event["messages"][-1].pretty_print()
+            pass
         return config
     
     def ask(self, config, message):
         input_message = HumanMessage(content=message)
-        for event in self.app.stream({"messages": [input_message]}, config, stream_mode="values"):
-            event["messages"][-1].pretty_print()
+        output_message = None
+        for output_message in self.app.stream({"messages": [input_message]}, config, stream_mode="values"):
+            pass
+        return output_message["messages"][-1].content
         
 if __name__ == "__main__":
     conversation = ConversationWithMemory()
-    config = conversation.create_session(artifact_name='和田玉壶', context='这是一件精美的文物。')
-    conversation.ask(config, "介绍一下此玉壶。")
+    config = conversation.create_session(artifact_name='莲鹤方壶', context='这是一件精美的文物。')
+    output = conversation.ask(config, "介绍一下此玉壶。")
+    print(output)

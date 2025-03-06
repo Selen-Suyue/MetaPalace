@@ -6,15 +6,14 @@ from RAG.models.bge_embedding import MetaPalaceEmbedding
 from RAG.models.qdrant_db_manager import QdrantManager
 
 EMBEDDING_MODEL = MetaPalaceEmbedding()
-# Max token limit for the conversation storage.
-MAX_TOKEN_LIMIT = 1000
+DB_PERSISTENCE_PATH = "RAG\\db\\qdrant"
 
 class LangchainVectorStoreManager:
     """
         To implement the vector store manager for Langchain use.
     """
-    def __init__(self):
-        self.manager = QdrantManager()
+    def __init__(self, db_path: str = DB_PERSISTENCE_PATH):
+        self.manager = QdrantManager(db_persistence_path=db_path)
         self.client = self.manager.client
 
     def get_qdrant_manager(self):
