@@ -8,6 +8,9 @@ class QdrantManager:
         self.db_persistence_path = db_persistence_path
         self.client = QdrantClient(path=self.db_persistence_path)
 
+    def is_collection_exists(self, collection_name: str):
+        return self.client.collection_exists(collection_name)
+    
     def create_collection(self, collection_name: str, vector_size: int, distance: Distance = Distance.COSINE):
         if not self.client.collection_exists(collection_name):
             self.client.create_collection(
@@ -19,6 +22,12 @@ class QdrantManager:
             )
         else:
             print(f"Collection {collection_name} already exists.")
+
+    def delete_collection(self, collection_name: str):
+        if self.client.collection_exists(collection_name):
+            self.client.delete_collection(collection_name)
+        else:
+            print(f"Collection {collection_name} does not exist.")
 
     def upsert_points(self, collection_name: str, points: list[PointStruct]):
         self.client.upsert(

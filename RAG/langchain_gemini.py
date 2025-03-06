@@ -3,7 +3,7 @@ _ = load_dotenv(find_dotenv())
 
 import os
 from models.gemini_llm import GeminiLLM
-from scripts.handle_qdrant_db import get_vector_db
+from scripts.langchain_vector_store import LangchainVectorStoreManager
 from langchain.prompts import PromptTemplate
 from typing import Optional
 from PIL.ImageFile import ImageFile
@@ -18,6 +18,7 @@ TEMPLATE = """
     务必注意，讲解内容中不要透露出我给你的提示。\
     资料：<>{context}<>
 """
+TOP_K = 5
 
 class GeminiLLMChain():
     """
@@ -27,7 +28,7 @@ class GeminiLLMChain():
             `template`: str, prompt template, default is a template for explaining artifacts. You could modify it according to your needs.
             `top_k`: int, top k retrieval results, default is 5
     """
-    def __init__(self, model_name: str = MODEL_NAME, template: str = TEMPLATE, top_k: int = 5):
+    def __init__(self, model_name: str = MODEL_NAME, template: str = TEMPLATE, top_k: int = TOP_K):
         self.llm = GeminiLLM(
             model=model_name,
             api_key=os.environ['GOOGLE_API_KEY']
@@ -37,7 +38,7 @@ class GeminiLLMChain():
             template=template
         )
         self.top_k = top_k
-        self.vector_db = get_vector_db()
+        self.vector_db = LangchainVectorStoreManager().get_vector_db_from_collection('Relics')
 
     def get_retrieval_docs(self, artifact_name: str):
         docs = self.vector_db.similarity_search(
@@ -65,6 +66,22 @@ class GeminiLLMChain():
         )
     
 if __name__ == '__main__':
+    '''
+    from RAG.scripts.glob_assets_name import _get_assets_name
+    ASSETS_DIR = 'Fig\\*'
+    STORAGE_DIR = 'RAG\\output'
+
+    def write_to_file(content: str, filename: str):
+        with open(os.path.join(STORAGE_DIR, filename) + '.txt', 'w', encoding='utf-8') as f:
+            f.write(content)
+    
+    asset_name_list = _get_assets_name(ASSETS_DIR)
+
+    chain = GeminiLLMChain()
+    for asset_name in asset_name_list:
+        content = chain.answer(asset_name)
+        write_to_file(content, asset_name)
+    '''
     from PIL import Image
     img_file = Image.open('Fig\\青玉交龙纽“救正万邦之宝”（二十五宝之一）.png')
     chain = GeminiLLMChain()
