@@ -68,10 +68,18 @@ class GeminiLLMChain():
         )
     
     def create_session(self, artifact_name: str, k: int = TOP_K):
+        """
+            Create a new session for the artifact. The `k` parameter is optional.
+            Returns:
+                `config`: dict, the configuration of the current session
+        """
         context = self.get_retrieval_docs(artifact_name, k)
         return CONVERSATION_MANAGER.create_session(artifact_name, context)
     
     def chat(self, config, input: str):
+        """
+            Chat with the model. The `config` parameter is the configuration of the current session.
+        """
         return CONVERSATION_MANAGER(config, input)
     
 if __name__ == '__main__':
