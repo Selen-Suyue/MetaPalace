@@ -2,7 +2,7 @@ name: Daily Build Assets
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 每天凌晨执行
+    - cron: '0 */8 * * *'  # 每天8个小时执行一次
   workflow_dispatch:
 
 permissions:
