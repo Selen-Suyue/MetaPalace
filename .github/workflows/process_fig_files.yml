@@ -9,7 +9,7 @@ on:
     paths:
       - 'Fig/**'  # 仅在 Fig 目录中的文件发生变动时触发
   schedule:
-    - cron: '0 */6 * * *'  # 每6小时触发
+    - cron: '0 */3 * * *'  # 每3小时触发
       
 jobs:
   process-files:
