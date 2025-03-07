@@ -110,7 +110,7 @@ def process_image(client: Client, fig_path: str, base_name: str):
 
     except Exception as e:
         logging.error(f"处理文件 {fig_path} 失败: {e}")
-        sys.exit(1)
+        sys.exit(0)
 
 
 def main():
