@@ -4,7 +4,7 @@ import ssl, time
 import re
 
 from get_proxy import get_proxy
-from glob_assets_name import _get_assets_name
+from glob_assets_name import _get_assets_name, _get_assets_name_from_txt
 from file_handler import FileHandler, RestoreHandlerType
 
 # The default archive policy for the spider.
@@ -223,5 +223,5 @@ class BaiduBaikeSpider():
             i += 1
 
 if __name__ == '__main__':
-    spider = BaiduBaikeSpider()
+    spider = BaiduBaikeSpider(asset_names=_get_assets_name_from_txt())
     spider._run()
