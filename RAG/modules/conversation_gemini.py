@@ -4,9 +4,13 @@ _ = load_dotenv(find_dotenv())
 import uuid, os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from typing import Annotated
+from typing_extensions import TypedDict
+
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, AnyMessage
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import START, MessagesState, StateGraph
+from langgraph.graph import START, StateGraph
+from langgraph.graph.message import add_messages
 
 from RAG.models.gemini_llm import GeminiLLM
 
@@ -18,6 +22,9 @@ SYSTEM_MESSAGE_TEMPLATE = """
     关于该文物的资料在此给出：{context}
 """
 
+class SessionState(TypedDict):
+    messages: Annotated[list[AnyMessage], add_messages]
+
 class ConversationWithMemory():
     """
         A class for Gemini to chat with users.
@@ -27,7 +34,7 @@ class ConversationWithMemory():
     )
     def __init__(self):
         self.workflow = StateGraph(
-            state_schema=MessagesState
+            state_schema=SessionState
         )
         self.workflow.add_edge(START, "model")
         self.workflow.add_node("model", self.call_gemini_llm)
@@ -36,7 +43,7 @@ class ConversationWithMemory():
             checkpointer=self.memory
         )
     
-    def call_gemini_llm(self, state: MessagesState):
+    def call_gemini_llm(self, state: SessionState):
         response = self.gemini_llm.invoke(state['messages'])
         return {'messages': AIMessage(content=response)}
 
@@ -74,5 +81,4 @@ class ConversationWithMemory():
 if __name__ == "__main__":
     conversation = ConversationWithMemory()
     config = conversation.create_session(artifact_name='莲鹤方壶', context='这是一件精美的文物。')
-    output = conversation(config, "介绍一下此玉壶。")
-    print(output)
+    print(conversation(config, "我忘记了这件文物叫什么名字。"))
