@@ -83,7 +83,6 @@ class GeminiLLMChain():
         return CONVERSATION_MANAGER(config, input)
     
 if __name__ == '__main__':
-    '''
     NEW_TEMPLATE = """
         我想在线上故宫博物馆展览一件精美的文物：{artifact_name}，文物图片已经给出。\
         请你根据后面的资料（已经用<>包围起来），给出一段50字左右的文物介绍。\
@@ -92,7 +91,7 @@ if __name__ == '__main__':
         资料：<>{context}<>
     """
     
-    from RAG.scripts.glob_assets_name import _get_assets_name
+    from RAG.scripts.glob_assets_name import _get_assets_name_from_txt
     ASSETS_DIR = 'Fig\\*'
     STORAGE_DIR = 'RAG\\output'
 
@@ -100,8 +99,8 @@ if __name__ == '__main__':
         with open(os.path.join(STORAGE_DIR, filename) + '.txt', 'w', encoding='utf-8') as f:
             f.write(content)
     
-    #asset_name_list = _get_assets_name(ASSETS_DIR)
-    asset_name_list = ['青玉浮雕青蛙荷叶洗', '青玉瓜鼠', '青玉交龙纽“救正万邦之宝”（二十五宝之一）', '错金银蟠虺纹尊', '黄色缎平金绣五毒葫芦纹活计-名姓片套', '黄杨木雕带链葫芦', '龙泉窑青釉带盖执壶']
+    asset_name_list = _get_assets_name_from_txt('release.txt')
+    #asset_name_list = ['青玉浮雕青蛙荷叶洗', '青玉瓜鼠', '青玉交龙纽“救正万邦之宝”（二十五宝之一）', '错金银蟠虺纹尊', '黄色缎平金绣五毒葫芦纹活计-名姓片套', '黄杨木雕带链葫芦', '龙泉窑青釉带盖执壶']
 
     chain = GeminiLLMChain(template=NEW_TEMPLATE)
     for asset_name in asset_name_list:
@@ -116,3 +115,4 @@ if __name__ == '__main__':
     new_session_config = chain.create_session('青玉交龙纽“救正万邦之宝”（二十五宝之一）', 3)
     print(chain.chat(new_session_config, '你是谁？'))
     print(chain.chat(new_session_config, '刚刚的文物叫啥名？'))
+    '''
