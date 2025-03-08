@@ -3,6 +3,7 @@ _ = load_dotenv(find_dotenv())
 
 import os
 from models.gemini_llm import GeminiLLM
+from models.speech_to_text import SpeechToText
 from scripts.langchain_vector_store import LangchainVectorStoreManager
 from modules.conversation_gemini import ConversationWithMemory
 from langchain.prompts import PromptTemplate
@@ -24,6 +25,8 @@ TOP_K = 5
 # If you want to create a new DB client, please initialize the vector store in another dir.
 VECTOR_DB_MANAGER = LangchainVectorStoreManager()
 CONVERSATION_MANAGER = ConversationWithMemory()
+# Speech to text model
+WHISPER_MODEL = 'tiny'
 
 class GeminiLLMChain():
     """
@@ -42,6 +45,7 @@ class GeminiLLMChain():
             template=template
         )
         self.vector_db = VECTOR_DB_MANAGER.get_vector_db_from_collection('Relics')
+        self.speech_to_text = SpeechToText(model_name=WHISPER_MODEL)
 
     def get_retrieval_docs(self, artifact_name: str, k: int):
         docs = self.vector_db.similarity_search(
@@ -58,7 +62,7 @@ class GeminiLLMChain():
                 `img`: PIL.ImageFile, the image of the artifact. You can use Image.open() to open an image file.
             Example:
                 >>> chain = GeminiLLMChain()
-                >>> print(chain.answer('黄杨木雕带链葫芦'))
+                >>> print(chain('黄杨木雕带链葫芦'))
         """
         context = self.get_retrieval_docs(artifact_name, top_k)
         prompt = self.chain_template.format(artifact_name=artifact_name, context=context)
@@ -72,6 +76,7 @@ class GeminiLLMChain():
             Create a new session for the artifact. The `k` parameter is optional.
             Returns:
                 `config`: dict, the configuration of the current session
+                `k`: int, the number of documents to retrieve
         """
         context = self.get_retrieval_docs(artifact_name, k)
         return CONVERSATION_MANAGER.create_session(artifact_name, context)
@@ -82,7 +87,17 @@ class GeminiLLMChain():
         """
         return CONVERSATION_MANAGER(config, input)
     
+    def chat_with_audio(self, config, audio):
+        """
+            Chat with the model using audio. 
+            Parameters:
+                `config`: dict, the configuration of the current session
+                `audio`: The path to the audio file to open, or the audio waveform
+        """
+        return CONVERSATION_MANAGER(config, self.speech_to_text(audio))
+    
 if __name__ == '__main__':
+    '''
     NEW_TEMPLATE = """
         我想在线上故宫博物馆展览一件精美的文物：{artifact_name}，文物图片已经给出。\
         请你根据后面的资料（已经用<>包围起来），给出一段50字左右的文物介绍。\
@@ -107,12 +122,7 @@ if __name__ == '__main__':
         content = chain(asset_name)
         write_to_file(content, asset_name)
     '''
-    from PIL import Image
-    img_file = Image.open('Fig\\青玉交龙纽“救正万邦之宝”（二十五宝之一）.png')
     chain = GeminiLLMChain()
-    print(chain('青玉交龙纽“救正万邦之宝”（二十五宝之一）', img=img_file))
-
-    new_session_config = chain.create_session('青玉交龙纽“救正万邦之宝”（二十五宝之一）', 3)
-    print(chain.chat(new_session_config, '你是谁？'))
-    print(chain.chat(new_session_config, '刚刚的文物叫啥名？'))
-    '''
+    session = {}
+    session['user1'] = chain.create_session('青玉浮雕青蛙荷叶洗')
+    print(chain.chat_with_audio(session['user1'], 'RAG\\audio\\hello.wav'))

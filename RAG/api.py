@@ -1,7 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile
 
 from langchain_gemini import GeminiLLMChain
-import uuid
+import uuid, os
 
 app = FastAPI()
 
@@ -16,15 +16,20 @@ def build_config(string_id: str):
     }
 
 @app.get("/chat/create_session/")
-async def create_session_id(artifact_name: str, k: int = 5):
+async def create_session(artifact_name: str, k: int = 5):
     config = chain.create_session(artifact_name, k)
-    return {"session_id": str(config["configurable"]["thread_id"])}
+    return {'session_id': str(config["configurable"]["thread_id"])}
 
-@app.get("/chat/")
-async def get_response(session_id: str, input: str):
+@app.post("/chat_with_audio/")
+async def get_response(session_id: str, file: UploadFile):
+    with open(file.filename, 'wb') as buffer:
+        buffer.write(await file.read())
     config = build_config(session_id)
-    response = chain.chat(config, input)
-    return {"question": input, "response": response}
+    response = chain.chat_with_audio(config, file.filename)
+
+    if os.path.exists(file.filename):
+        os.remove(file.filename)
+    return {"response": response}
 
 if __name__ == "__main__":
     HOST = "localhost"
@@ -32,8 +37,3 @@ if __name__ == "__main__":
 
     import uvicorn
     uvicorn.run(app, host=HOST, port=PORT)
-    '''
-        URL example:
-            "http://{HOST}:{PORT}/chat/create_session?artifact_name=xxx"
-            "http://{HOST}:{PORT}/chat?session_id=xxx&input=xxx"
-    '''
