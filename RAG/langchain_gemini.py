@@ -125,4 +125,4 @@ if __name__ == '__main__':
     chain = GeminiLLMChain()
     session = {}
     session['user1'] = chain.create_session('青玉浮雕青蛙荷叶洗')
-    print(chain.chat(session['user1'], '这件文物叫什么名字？'))
+    print(chain.chat_with_audio(session['user1'], 'RAG\\audio\\hello.wav'))
