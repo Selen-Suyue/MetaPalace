@@ -1,3 +1,5 @@
 GLB/*.glb filter=lfs diff=lfs merge=lfs -text
 Video/*.mp4 filter=lfs diff=lfs merge=lfs -text
 Fig/*.png filter=lfs diff=lfs merge=lfs -text
+RAG/models/bge-small-zh-v1.5/pytorch_model.bin filter=lfs diff=lfs merge=lfs -text
+RAG/models/bge-small-zh-v1.5/model.safetensors filter=lfs diff=lfs merge=lfs -text
