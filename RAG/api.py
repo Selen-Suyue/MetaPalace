@@ -7,7 +7,7 @@ from typing import Optional
 from uuid import UUID
 
 from langchain_gemini import GeminiLLMChain
-import uuid, os
+import uuid, os, librosa
 from io import BytesIO
 
 app = FastAPI(
@@ -78,7 +78,8 @@ async def chat_with_artifact(
     try:
         audio_data = await audio.read()
         with BytesIO(audio_data) as audio_file:
-            response = chain.chat_with_audio(config, audio_file)
+            waveform, _ = librosa.load(audio_file, sr=None)
+            response = chain.chat_with_audio(config, waveform)
             
         content = {"response": response}
         response = JSONResponse(content=content)

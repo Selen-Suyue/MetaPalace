@@ -1,7 +1,7 @@
 from enum import Enum, unique
 
-DATA_PATH = 'RAG/data/'
-ARCHIVE_PATH = 'RAG/archive/'
+DATA_PATH = './RAG/data/'
+ARCHIVE_PATH = './RAG/archive/'
 ARCHIVED_ASSETS_FILENAME = 'archived_assets.txt'
 
 ECODING = 'utf-8'

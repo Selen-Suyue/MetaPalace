@@ -6,7 +6,7 @@ from RAG.models.bge_embedding import MetaPalaceEmbedding
 from RAG.models.qdrant_db_manager import QdrantManager
 
 EMBEDDING_MODEL = MetaPalaceEmbedding()
-DB_PERSISTENCE_PATH = "RAG\\db\\qdrant"
+DB_PERSISTENCE_PATH = "./RAG/db/qdrant"
 
 class LangchainVectorStoreManager:
     """

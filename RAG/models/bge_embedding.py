@@ -4,7 +4,7 @@ from pydantic import BaseModel, model_validator
 from typing import Dict, List
 from FlagEmbedding import FlagModel
 
-MODEL_PATH = 'RAG\\models\\bge-small-zh-v1.5'
+MODEL_PATH = './RAG/models/bge-small-zh-v1.5'
 
 class MetaPalaceEmbedding(BaseModel, Embeddings):
     @model_validator(mode='before')
