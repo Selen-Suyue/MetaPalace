@@ -8,6 +8,7 @@ from uuid import UUID
 
 from langchain_gemini import GeminiLLMChain
 import uuid, os
+from io import BytesIO
 
 app = FastAPI(
     middleware=[
@@ -75,13 +76,10 @@ async def chat_with_artifact(
 
     # 2. 处理音频并获取响应
     try:
-        with open(audio.filename, "wb") as buffer:
-            buffer.write(await audio.read())
-
-        response = chain.chat_with_audio(config, audio.filename)
-
-        if os.path.exists(audio.filename):
-            os.remove(audio.filename)
+        audio_data = await audio.read()
+        with BytesIO(audio_data) as audio_file:
+            response = chain.chat_with_audio(config, audio_file)
+            
         content = {"response": response}
         response = JSONResponse(content=content)
 
