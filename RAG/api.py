@@ -13,15 +13,14 @@ app = FastAPI(
     middleware=[
         Middleware(
             CORSMiddleware,
-            allow_origins=[
-                "https://metapalace.xj63.fun"
-            ],  # 仅允许来自 metapalace.xj63.fun 的访问
+            allow_origins=["*"],  # 只允许这个源进行请求
             allow_credentials=True,
             allow_methods=["*"],  # 允许所有方法
             allow_headers=["*"],  # 允许所有头部
         )
     ]
 )
+
 
 chain = GeminiLLMChain()
 
@@ -45,11 +44,14 @@ async def create_session_helper(artifact_name: str, k: int = 5) -> UUID:
 
 # --- API 端点 ---
 
+@app.head("/")
+async def health_check():
+    return {"status": "OK"}
 
 @app.post("/aichat/{artifact_name}")
 async def chat_with_artifact(
     artifact_name: str,
-    file: UploadFile,
+    audio: UploadFile,
     session_id: Optional[str] = Cookie(None),
 ):
     """
@@ -73,13 +75,13 @@ async def chat_with_artifact(
 
     # 2. 处理音频并获取响应
     try:
-        with open(file.filename, "wb") as buffer:
-            buffer.write(await file.read())
+        with open(audio.filename, "wb") as buffer:
+            buffer.write(await audio.read())
 
-        response = chain.chat_with_audio(config, file.filename)
+        response = chain.chat_with_audio(config, audio.filename)
 
-        if os.path.exists(file.filename):
-            os.remove(file.filename)
+        if os.path.exists(audio.filename):
+            os.remove(audio.filename)
         content = {"response": response}
         response = JSONResponse(content=content)
 
@@ -87,15 +89,15 @@ async def chat_with_artifact(
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
     # 3. 设置 Cookie 以便后续调用
-    expires = datetime.utcnow() + timedelta(hours=SESSION_EXPIRY_HOURS)
+    expires = datetime.now() + timedelta(hours=SESSION_EXPIRY_HOURS)
     response.set_cookie(
         SESSION_COOKIE_NAME,
         value=str(session_uuid),
         httponly=True,
         expires=expires.strftime("%a, %d %b %Y %H:%M:%S GMT"),
-        domain="api.metapalace.xj63.fun",
-        secure=True,  # 只有在HTTPS下才发送cookie
-        samesite="strict",  # 阻止跨站请求伪造(CSRF)攻击
+        # domain="api.metapalace.xj63.fun",
+        # secure=True,  # 只有在HTTPS下才发送cookie
+        # samesite="strict",  # 阻止跨站请求伪造(CSRF)攻击
     )
     return response
 
