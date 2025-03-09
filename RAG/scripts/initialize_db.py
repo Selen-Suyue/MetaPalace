@@ -4,7 +4,7 @@ from langchain_vector_store import LangchainVectorStoreManager
 
 from RAG.models.data_handler import DataHandler
 
-DATA_PATH = 'RAG\\data'
+DATA_PATH = './RAG/data'
 COLLECTION_NAME = 'Relics'
 
 def initialize_db(collection_name: str = COLLECTION_NAME):

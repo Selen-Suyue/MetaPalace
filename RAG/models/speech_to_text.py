@@ -10,5 +10,5 @@ class SpeechToText:
     
 if __name__ == '__main__':
     stt = SpeechToText()
-    text = stt('RAG\\audio\\hello.wav')
+    text = stt('./RAG/audio/hello.wav')
     print(text)

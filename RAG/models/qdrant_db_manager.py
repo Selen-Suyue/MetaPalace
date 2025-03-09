@@ -2,7 +2,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 
 # Initialize the Qdrant database with the given path locally.
-DB_PERSISTENCE_PATH = "RAG\\db\\qdrant"
+DB_PERSISTENCE_PATH = "./RAG/db/qdrant"
 class QdrantManager:
     def __init__(self, db_persistence_path: str = DB_PERSISTENCE_PATH):
         self.db_persistence_path = db_persistence_path

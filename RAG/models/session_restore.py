@@ -1,6 +1,6 @@
 import sqlite3 as sql
 
-SQL_DIR = 'RAG\\db\\sqlite'
+SQL_DIR = './RAG/db/sqlite'
 DB_NAME = 'session.db'
 
 session_db = sql.connect(f'{SQL_DIR}\\{DB_NAME}')
