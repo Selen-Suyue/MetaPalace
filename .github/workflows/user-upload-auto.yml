@@ -1,0 +1,47 @@
+    name: Auto PR for User Uploads (Scheduled)
+
+    on:
+      schedule:
+        - cron: "0 0 * * *"  # 每天
+      workflow_dispatch:  # 允许手动触发
+
+    jobs:
+      validate-and-pr:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
+            with:
+              fetch-depth: 0
+
+          - name: Get recent branches
+            id: get-branches
+            run: |
+              # 获取最近创建的分支
+              RECENT_BRANCHES=$(git for-each-ref --sort=-committerdate --count=10 --format='%(refname:short)' refs/heads/)
+              echo "RECENT_BRANCHES=$RECENT_BRANCHES" >> $GITHUB_ENV
+
+          - name: Check branch names and create PRs
+            run: |
+              for BRANCH_NAME in ${{ env.RECENT_BRANCHES }}; do
+                if [[ "$BRANCH_NAME" =~ ^user-upload-.* ]]; then
+                  echo "Found matching branch: $BRANCH_NAME"
+                  # Call the reusable workflow to create the PR
+                  gh workflow run create-pr.yml -r main
+
+                  echo "Calling create-pr.yml workflow for branch: $BRANCH_NAME"
+                  
+                  # 调用可重用 workflow
+                  
+                  
+                  
+                else
+                  echo "Skipping branch: $BRANCH_NAME"
+                fi
+              done
+          - name: Call Create PR Workflow
+            if: github.event_name == 'schedule' # 确保只在计划任务时调用
+            uses: ./.github/workflows/create-pr.yml@main
+            with:
+              branch_name: ${{ matrix.branch }} # 从矩阵中获取分支名称
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 传递 GITHUB_TOKEN
