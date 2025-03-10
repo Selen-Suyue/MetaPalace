@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, Cookie, Depends
+from fastapi import FastAPI, UploadFile, Cookie, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,7 +7,8 @@ from typing import Optional
 from uuid import UUID
 
 from langchain_gemini import GeminiLLMChain
-import uuid, os, librosa
+import uuid, os, librosa, wave, torch
+import numpy as np
 from io import BytesIO
 
 app = FastAPI(
@@ -42,6 +43,26 @@ async def create_session_helper(artifact_name: str, k: int = 5) -> UUID:
     config = chain.create_session(artifact_name, k)
     return config["configurable"]["thread_id"]
 
+async def read_audio_file(audio_file: UploadFile):
+    try:
+        contents = await audio_file.read()
+        audio_io = BytesIO(contents)
+        wf = wave.open(audio_io, 'rb')
+
+        # 读取音频数据
+        num_channels = wf.getnchannels()
+        sample_width = wf.getsampwidth()
+        frame_rate = wf.getframerate()
+        num_frames = wf.getnframes()
+        frames = wf.readframes(num_frames)
+
+        waveform = np.frombuffer(frames, dtype=np.int16)
+        waveform_tensor = torch.from_numpy(waveform).float()
+        return waveform_tensor
+    except wave.Error as e:
+        raise HTTPException(status_code=400, detail=f"Invalid WAV file: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading audio data: {str(e)}")
 
 # --- API 端点 ---
 
@@ -76,11 +97,14 @@ async def chat_with_artifact(
 
     # 2. 处理音频并获取响应
     try:
+        waveform = await read_audio_file(audio)
+        response = chain.chat_with_audio(config, waveform)
+        '''
         audio_data = await audio.read()
         with BytesIO(audio_data) as audio_file:
             waveform, _ = librosa.load(audio_file, sr=None)
             response = chain.chat_with_audio(config, waveform)
-            
+        '''
         content = {"response": response}
         response = JSONResponse(content=content)
 
