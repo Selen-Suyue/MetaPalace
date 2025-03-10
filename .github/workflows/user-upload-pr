@@ -1,0 +1,114 @@
+name: Auto PR for User Uploads
+
+on:
+  create:
+    types: [branch]
+
+jobs:
+  validate-and-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch name and exit if not user-upload-*
+        id: check-branch-name
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}" # 获取分支名称
+          if [[ ! "$BRANCH_NAME" =~ ^user-upload-.* ]]; then
+            echo "::notice title=Skipping Action::Branch name '$BRANCH_NAME' does not start with 'user-upload-'. Exiting."
+            echo "SKIP_ACTION=true" >> $GITHUB_ENV
+            exit 0 # 正常退出，但跳过后续步骤
+          else
+            echo "Branch name '$BRANCH_NAME' matches the pattern. Continuing..."
+            echo "SKIP_ACTION=false" >> $GITHUB_ENV
+          fi
+
+      - name: Validate commit changes
+        if: env.SKIP_ACTION != 'true'
+        id: validate
+        run: |
+          set -e
+          
+          # 获取当前分支
+          HEAD_BRANCH="${{ github.ref_name }}"
+
+          # 获取改动的文件
+          MODIFIED_FILES=$(git diff --name-only HEAD^ HEAD)
+
+          # 允许的 PNG 和 JSON 目录
+          PNG_FILES=()
+          JSON_FILES=()
+
+          for file in $MODIFIED_FILES; do
+            if [[ $file == Fig/*.png ]]; then
+              PNG_FILES+=("$file")
+            elif [[ $file == user-upload-msg/*.json ]]; then
+              JSON_FILES+=("$file")
+            else
+              echo "❌ 检测到不允许的文件: $file"
+              exit 1
+            fi
+          done
+
+          # 检查 PNG 和 JSON 是否一一对应
+          if [ ${#PNG_FILES[@]} -ne ${#JSON_FILES[@]} ]; then
+            echo "❌ PNG 文件和 JSON 文件数量不匹配"
+            exit 1
+          fi
+
+          for png_file in "${PNG_FILES[@]}"; do
+            filename=$(basename "$png_file" .png)
+            json_file="user-upload-msg/$filename.json"
+            if [[ ! " ${JSON_FILES[*]} " =~ " $json_file " ]]; then
+              echo "❌ 找不到匹配的 JSON 文件: $json_file"
+              exit 1
+            fi
+          done
+
+          echo "✅ 文件验证成功"
+          echo "FILES_VALIDATED=true" >> $GITHUB_ENV
+
+      - name: Extract PR metadata from JSON
+        if: env.SKIP_ACTION != 'true' && env.FILES_VALIDATED == 'true'
+        id: extract-metadata
+        run: |
+          set -e
+          
+          # 获取 JSON 文件列表
+          JSON_FILES=$(git diff --name-only HEAD^ HEAD | grep 'user-upload-msg/.*\.json')
+
+          # 读取 JSON 文件内容
+          PR_TITLE=""
+          PR_BODY="### New User Upload\n\n"
+
+          for json_file in $JSON_FILES; do
+            content=$(cat "$json_file" | jq -r '.title, .description')
+
+            title=$(echo "$content" | sed -n '1p')
+            description=$(echo "$content" | sed -n '2p')
+
+            PR_TITLE="$PR_TITLE$title, "
+            PR_BODY="$PR_BODY- **$title**: $description\n"
+          done
+
+          PR_TITLE=${PR_TITLE%, }  # 去掉末尾的逗号
+
+          echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
+          echo "PR_BODY=$PR_BODY" >> $GITHUB_ENV
+
+      - name: Create Pull Request
+        if: env.SKIP_ACTION != 'true' && env.FILES_VALIDATED == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_BRANCH: ${{ github.ref_name }}
+          BASE_BRANCH: main
+        run: |
+          gh pr create \
+            --title "${{ env.PR_TITLE }}" \
+            --body "${{ env.PR_BODY }}" \
+            --base "$BASE_BRANCH" \
+            --head "${{ github.repository }}:$HEAD_BRANCH" \
+            --repo "$UPSTREAM_REPO"
