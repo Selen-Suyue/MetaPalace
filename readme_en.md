@@ -56,6 +56,7 @@ Welcome to visit our website [MetaPalaceSite](https://metapalace.xj63.fun/), and
 
 
 ## File Structure
+```
 MetaPalace/
 ├── .github/
 │   ├── workflows/
@@ -103,6 +104,7 @@ MetaPalace/
 ├── readme.md                      # Chinese README file
 └── readme_en.md                   # English README file
 └── requirements.txt               # Project dependencies file
+```
 
 ## Notes
 
