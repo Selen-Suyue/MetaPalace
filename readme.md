@@ -5,7 +5,7 @@
 
 该项目由 [Yue Su](https://selen-suyue.github.io),[xj63](https://github.com/xj63),[Kai Li](https://github.com/wink-snow),[Zefeng Wu](https://github.com/windansnowman),[Ruihan Wu](https://github.com/cool-chicken)完成，...
 
-欢迎访问我们的 [网站](https://metapalace.xj63.fun),以及这是我们的[前端设计](https://github.com/xj63/MetaPalaceSite)
+欢迎访问我们的 [网站](https://metapalace.xj63.fun),以及这是我们的[前端设计](https://github.com/xj63/MetaPalaceSite)。
 
 ## 项目详情
 
