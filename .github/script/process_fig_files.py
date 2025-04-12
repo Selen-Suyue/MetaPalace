@@ -58,8 +58,8 @@ def process_image(client: Client, fig_path: str, base_name: str):
     video_path = os.path.join(VIDEO_DIR, f"{base_name}.mp4")
     glb_path = os.path.join(GBL_DIR, f"{base_name}.glb")
 
-    if os.path.exists(video_path):
-        logging.info(f"跳过: {video_path} 已存在")
+    if os.path.exists(video_path) and os.path.exists(glb_path):
+        logging.info(f"跳过: {fig_path} 已存在")
         return
 
     logging.info(f"处理文件: {fig_path}")
