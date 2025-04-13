@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, Cookie, Depends, HTTPException
+from fastapi import FastAPI, UploadFile, Cookie, Query, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID
 
-from langchain_gemini import GeminiLLMChain
+from langchain_gemini import GeminiLLMChain, VECTOR_DB_MANAGER
+from scripts.modify_db import update_db
 import uuid, os, librosa, wave, torch
 import numpy as np
 from io import BytesIO
@@ -31,6 +32,8 @@ SESSION_COOKIE_NAME = "session_id"
 SESSION_EXPIRY_HOURS = 1
 HOST = "0.0.0.0"
 PORT = 10004
+
+COLLECTION = "Relics"
 
 
 # --- 实用函数 ---
@@ -124,23 +127,23 @@ async def chat_with_artifact(
     )
     return response
 
-
-@app.get("/chat/create_session/")
-async def create_session(artifact_name: str, k: int = 5):
-    session_uuid = await create_session_helper(artifact_name, k)
-    return {"session_id": str(session_uuid)}
-
-
-@app.post("/chat_with_audio/")
-async def get_response(session_id: str, file: UploadFile):
-    with open(file.filename, "wb") as buffer:
-        buffer.write(await file.read())
-    config = build_config(uuid.UUID(session_id))
-    response = chain.chat_with_audio(config, file.filename)
-
-    if os.path.exists(file.filename):
-        os.remove(file.filename)
-    return {"response": response}
+@app.post("/update_db")
+async def update_database(
+    folder_path: str = Query(None, description="The folder path to the documents"),
+    texts: list[str] = Query(None, description="The texts to be added to the database"),
+    collection_name: str = Query(COLLECTION, description="The name of the collection")
+):
+    """
+        Update the database with the given texts or documents in the specified folder.\
+        Make sure that you have the access to the admin permission.\
+        `folder_path` and `texts` are mutually exclusive.
+    """
+    try: 
+        update_db(folder_path, texts, collection_name, VECTOR_DB_MANAGER)
+        return {"message": "Database updated successfully."}
+    
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
 if __name__ == "__main__":
