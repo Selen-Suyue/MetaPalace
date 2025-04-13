@@ -1,3 +1,12 @@
+<h2 align="center" style="color: red; font-size: 28px;">🚨 Site Migration Notice 🚨</h2>
+
+<p align="center" style="color: red; font-size: 20px;">
+Due to unforeseen circumstances, the original site is temporarily unavailable.<br>
+Please visit the new address below (some features may be missing):<br>
+<a href="https://metapalacesite.pages.dev" target="_blank"><b>https://metapalacesite.pages.dev</b></a>
+</p>
+
+
 # MetaPalace
 [Chinese version](readme.md)
 
