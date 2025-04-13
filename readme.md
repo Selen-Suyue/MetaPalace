@@ -6,6 +6,7 @@
 请访问新地址获取最新内容（部分功能缺失）：<br>
 <a href="https://metapalacesite.pages.dev" target="_blank"><b>https://metapalacesite.pages.dev</b></a>
 </p>
+
 # MetaPalace
 [英文版介绍](readme_en.md)
 
