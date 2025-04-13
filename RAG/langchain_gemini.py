@@ -97,7 +97,11 @@ class GeminiLLMChain():
         return CONVERSATION_MANAGER(config, self.speech_to_text(audio))
     
 if __name__ == '__main__':
-    '''
+
+    # -----------------
+    #     Generate
+    # -----------------
+
     NEW_TEMPLATE = """
         我想在线上故宫博物馆展览一件精美的文物：{artifact_name}，文物图片已经给出。\
         请你根据后面的资料（已经用<>包围起来），给出一段50字左右的文物介绍。\
@@ -107,8 +111,8 @@ if __name__ == '__main__':
     """
     
     from RAG.scripts.glob_assets_name import _get_assets_name_from_txt
-    ASSETS_DIR = 'Fig\\*'
-    STORAGE_DIR = 'RAG\\output'
+    ASSETS_DIR = 'Fig/*'
+    STORAGE_DIR = 'RAG/output'
 
     def write_to_file(content: str, filename: str):
         with open(os.path.join(STORAGE_DIR, filename) + '.txt', 'w', encoding='utf-8') as f:
@@ -121,8 +125,12 @@ if __name__ == '__main__':
     for asset_name in asset_name_list:
         content = chain(asset_name)
         write_to_file(content, asset_name)
-    '''
-    chain = GeminiLLMChain()
-    session = {}
-    session['user1'] = chain.create_session('青玉浮雕青蛙荷叶洗')
-    print(chain.chat_with_audio(session['user1'], './RAG/audio/hello.wav'))
+
+    # -------------
+    #     Test
+    # -------------
+
+    # chain = GeminiLLMChain()
+    # session = {}
+    # session['user1'] = chain.create_session('青玉浮雕青蛙荷叶洗')
+    # print(chain.chat_with_audio(session['user1'], './RAG/audio/hello.wav'))
